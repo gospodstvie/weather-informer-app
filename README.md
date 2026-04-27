@@ -61,7 +61,7 @@
 
 ## **5. Инструкция по запуску**
 
-* 1. Открыть терминал в VS Code (Ctrl + ~) или обычный PowerShell.
-* 2. Написать туда cd "c:\ПУТЬ_ДО_ПРОЕКТА".
-* 3. python -m http.server 5500.
-* 4. И открыть: http://localhost:5500/index.html.
+*  Открыть терминал в VS Code (Ctrl + ~) или обычный PowerShell.
+*  Написать туда cd "c:\ПУТЬ_ДО_ПРОЕКТА".
+*  python -m http.server 5500.
+*  И открыть: http://localhost:5500/index.html.
