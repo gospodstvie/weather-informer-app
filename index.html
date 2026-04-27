@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Погодный информер</title>
+  <link rel="icon" href="data:;base64,=" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -29,6 +30,13 @@
         />
         <button type="submit">Получить прогноз</button>
       </form>
+      <div class="favorites-controls">
+        <button id="add-favorite-button" type="button">Добавить в избранное</button>
+      </div>
+      <section class="favorites-section" aria-labelledby="favorites-title">
+        <h3 id="favorites-title">Избранные города</h3>
+        <div id="favorites-list" class="favorites-list"></div>
+      </section>
 
       <p id="status-message" class="status-message" aria-live="polite"></p>
 
@@ -37,10 +45,32 @@
         <img id="weather-icon" src="" alt="" width="100" height="100" />
         <p id="temperature" class="temperature"></p>
         <p id="description" class="description"></p>
+        <div id="weather-metrics" class="weather-metrics"></div>
       </article>
+
+      <section class="forecast-section" aria-labelledby="hourly-title">
+        <h3 id="hourly-title">Почасовой прогноз (24 часа)</h3>
+        <div id="hourly-forecast" class="forecast-scroll"></div>
+      </section>
+
+      <section class="forecast-section" aria-labelledby="daily-title">
+        <h3 id="daily-title">Прогноз на 5 дней</h3>
+        <div id="five-day-forecast" class="forecast-grid"></div>
+      </section>
+
+      <section class="chart-section" aria-labelledby="chart-title">
+        <h3 id="chart-title">График температуры (24 часа)</h3>
+        <div class="chart-wrapper">
+          <canvas id="temperature-chart" aria-label="График температуры по времени" role="img"></canvas>
+        </div>
+      </section>
     </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="api.js"></script>
+  <script src="state.js"></script>
+  <script src="ui.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
