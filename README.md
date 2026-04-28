@@ -31,19 +31,33 @@
 
 ---
 
-## **3. Стек технологий**
+##  Архитектура проекта
 
-* **Язык программирования:**
+Проект разделён на клиентскую и серверную части.
 
-  * HTML, CSS, JavaScript
+### Backend (Node.js + Express)
 
-* **API:**
+Обрабатывает запросы и проксирует их к OpenWeather API:
 
-  * OpenWeatherMap (или аналогичный сервис)
+- `/api/weather` — текущая погода
+- `/api/forecast` — прогноз
+- `/api/uv` — UV-индекс
 
-* **Дополнительно:**
+>  API-ключ хранится на сервере (безопасно)
 
-  * Библиотеки: Chart.js для визуализации температурных графиков.
+### Frontend (Vanilla JS)
+
+---
+
+##  Стек технологий
+
+- HTML5
+- CSS3
+- JavaScript (Vanilla)
+- Node.js
+- Express
+- Chart.js
+- OpenWeather API
 
 ---
 
@@ -61,7 +75,10 @@
 
 ## **5. Инструкция по запуску**
 
-*  Открыть терминал в VS Code (Ctrl + ~) или обычный PowerShell.
-*  Написать туда cd "c:\ПУТЬ_ДО_ПРОЕКТА".
-*  python -m http.server 5500.
-*  И открыть: http://localhost:5500/index.html.
+*  Установить проект.
+*  Открыть его и в папке проекта в консоль прописать npm.cmd install
+*  создать .env файл в котором нужно прописать следующее:
+*  OPENWEATHER_API_KEY=ЗДЕСЬ_НУЖНО_НАПИСАТЬ_АПИ_СВОЕГО_САЙТА  [https://home.openweathermap.org/users/sign_in]
+PORT=5500
+*  Затем прописать в консоль npm.cmd start
+*  перейти по ссылке [http://localhost:5500/]
