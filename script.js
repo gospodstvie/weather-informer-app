@@ -18,7 +18,6 @@ const favoritesList = document.getElementById("favorites-list");
 
 let activeCity = "";
 
-// Карта соответствия состояния погоды и темы интерфейса
 const weatherThemeMap = {
   Clear: "theme-clear",
   Rain: "theme-rain",
@@ -69,7 +68,6 @@ if (addFavoriteButton) {
 
 renderFavorites();
 
-// Выполняет запрос погоды по названию города через Fetch API
 async function fetchWeather(city) {
   if (window.weatherApi?.fetchWeather) {
     return window.weatherApi.fetchWeather(city);
@@ -88,7 +86,6 @@ async function fetchWeather(city) {
   return response.json();
 }
 
-// Отрисовывает данные погоды и обновляет тему под текущее состояние
 function renderWeather(data, uvIndex = null) {
   const weather = data.weather[0];
   const tempRounded = Math.round(data.main.temp);

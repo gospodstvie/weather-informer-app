@@ -86,7 +86,6 @@ const weatherUi = (() => {
       Number.isFinite(sunset) &&
       sunrise < sunset;
 
-    // Используем астрономические границы дня для текущей локации.
     const isNightBySunTime = hasValidTimeData ? dt < sunrise || dt >= sunset : false;
     document.body.classList.add(isNightBySunTime ? "theme-night" : "theme-day");
   }

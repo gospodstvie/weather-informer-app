@@ -1,10 +1,10 @@
 const weatherApi = (() => {
-  const API_KEY = "45d69cf7f72aa1539c5d5b6373418997";
-  const WEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
-  const FORECAST_BASE_URL = "https://api.openweathermap.org/data/2.5/forecast";
+  const WEATHER_BASE_URL = "/api/weather";
+  const FORECAST_BASE_URL = "/api/forecast";
+  const UV_BASE_URL = "/api/uv";
 
   async function fetchWeather(city) {
-    const url = `${WEATHER_BASE_URL}?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=ru`;
+    const url = `${WEATHER_BASE_URL}?q=${encodeURIComponent(city)}`;
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -18,7 +18,7 @@ const weatherApi = (() => {
   }
 
   async function fetchForecast(city) {
-    const url = `${FORECAST_BASE_URL}?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=ru`;
+    const url = `${FORECAST_BASE_URL}?q=${encodeURIComponent(city)}`;
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -29,13 +29,28 @@ const weatherApi = (() => {
     return normalizeForecast(forecastData);
   }
 
-  async function fetchUvIndex() {
-    return null;
+  async function fetchUvIndex(lat, lon) {
+    const url = `${UV_BASE_URL}?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        return null;
+      }
+
+      const uvData = await response.json();
+      return uvData?.uvi ?? null;
+    } catch (error) {
+      return null;
+    }
   }
 
   async function fetchWeatherBundle(city) {
     const weatherData = await fetchWeather(city);
-    const [forecastData, uvIndex] = await Promise.all([fetchForecast(city), fetchUvIndex()]);
+    const [forecastData, uvIndex] = await Promise.all([
+      fetchForecast(city),
+      fetchUvIndex(weatherData.coord.lat, weatherData.coord.lon)
+    ]);
 
     return {
       weatherData,
@@ -70,3 +85,4 @@ const weatherApi = (() => {
 })();
 
 window.weatherApi = weatherApi;
+
