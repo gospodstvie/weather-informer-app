@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "description": "Weather informer with backend proxy",
-  "main": "server.js",
+  "main": "server/server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server/server.js"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
     "express": "^5.1.0"
   }
 }
+

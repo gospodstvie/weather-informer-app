@@ -13,7 +13,7 @@ if (!OPENWEATHER_API_KEY) {
   process.exit(1);
 }
 
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, "..", "client")));
 
 async function fetchOpenWeather(endpoint, city) {
   const url = new URL(`${OPENWEATHER_BASE}/${endpoint}`);

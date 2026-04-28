@@ -228,3 +228,4 @@ const weatherUi = (() => {
 })();
 
 window.weatherUi = weatherUi;
+

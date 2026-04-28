@@ -1,6 +1,3 @@
-const API_KEY = "45d69cf7f72aa1539c5d5b6373418997";
-const BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
-
 const form = document.getElementById("weather-form");
 const cityInput = document.getElementById("city-input");
 const statusMessage = document.getElementById("status-message");
@@ -73,7 +70,7 @@ async function fetchWeather(city) {
     return window.weatherApi.fetchWeather(city);
   }
 
-  const url = `${BASE_URL}?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=ru`;
+  const url = `/api/weather?q=${encodeURIComponent(city)}`;
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -190,3 +187,4 @@ function renderFavorites() {
     }
   );
 }
+
