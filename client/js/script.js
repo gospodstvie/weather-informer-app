@@ -1,6 +1,3 @@
-const API_KEY = "45d69cf7f72aa1539c5d5b6373418997";
-const BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
-
 const form = document.getElementById("weather-form");
 const cityInput = document.getElementById("city-input");
 const statusMessage = document.getElementById("status-message");
@@ -18,7 +15,6 @@ const favoritesList = document.getElementById("favorites-list");
 
 let activeCity = "";
 
-// Карта соответствия состояния погоды и темы интерфейса
 const weatherThemeMap = {
   Clear: "theme-clear",
   Rain: "theme-rain",
@@ -69,13 +65,12 @@ if (addFavoriteButton) {
 
 renderFavorites();
 
-// Выполняет запрос погоды по названию города через Fetch API
 async function fetchWeather(city) {
   if (window.weatherApi?.fetchWeather) {
     return window.weatherApi.fetchWeather(city);
   }
 
-  const url = `${BASE_URL}?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=ru`;
+  const url = `/api/weather?q=${encodeURIComponent(city)}`;
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -88,7 +83,6 @@ async function fetchWeather(city) {
   return response.json();
 }
 
-// Отрисовывает данные погоды и обновляет тему под текущее состояние
 function renderWeather(data, uvIndex = null) {
   const weather = data.weather[0];
   const tempRounded = Math.round(data.main.temp);
@@ -193,3 +187,4 @@ function renderFavorites() {
     }
   );
 }
+

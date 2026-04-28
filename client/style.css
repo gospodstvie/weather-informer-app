@@ -28,12 +28,10 @@ body::before {
   transition: background 0.4s ease;
 }
 
-/* Базовая тема до получения данных */
 body.theme-default {
   background: linear-gradient(135deg, #3a7bd5, #00d2ff);
 }
 
-/* Темы под разные погодные состояния */
 body.theme-clear {
   background: linear-gradient(135deg, #ff9966, #ffcc70);
 }
@@ -314,3 +312,4 @@ button:active {
     width: 100%;
   }
 }
+

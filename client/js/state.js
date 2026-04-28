@@ -56,3 +56,4 @@ const weatherState = (() => {
 })();
 
 window.weatherState = weatherState;
+
