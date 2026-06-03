@@ -2,37 +2,70 @@ const path = require("path");
 const express = require("express");
 require("dotenv").config();
 
+const { geocodeCity } = require("./nominatim");
+const { fetchOpenMeteo } = require("./openMeteo");
+const { normalizeCurrent, normalizeForecast } = require("./normalize");
+
 const app = express();
 const PORT = Number(process.env.PORT) || 5500;
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
-const OPENWEATHER_BASE = "https://api.openweathermap.org/data/2.5";
-const OPENWEATHER_ONECALL = "https://api.openweathermap.org/data/3.0/onecall";
 
-if (!OPENWEATHER_API_KEY) {
-  console.error("OPENWEATHER_API_KEY is not set in .env");
-  process.exit(1);
+const FORECAST_PARAMS = {
+  current: [
+    "temperature_2m",
+    "relative_humidity_2m",
+    "apparent_temperature",
+    "weather_code",
+    "wind_speed_10m",
+    "wind_direction_10m",
+    "pressure_msl",
+    "uv_index",
+    "is_day"
+  ].join(","),
+  hourly: [
+    "temperature_2m",
+    "precipitation_probability",
+    "weather_code",
+    "visibility",
+    "wind_speed_10m"
+  ].join(","),
+  daily: [
+    "weather_code",
+    "temperature_2m_max",
+    "temperature_2m_min",
+    "sunrise",
+    "sunset",
+    "uv_index_max",
+    "precipitation_probability_max",
+    "wind_speed_10m_max"
+  ].join(","),
+  timezone: "auto",
+  forecast_days: "7"
+};
+
+async function fetchMeteoForecast(lat, lon) {
+  return fetchOpenMeteo("/v1/forecast", {
+    latitude: lat,
+    longitude: lon,
+    ...FORECAST_PARAMS
+  });
 }
 
 app.use(express.static(path.join(__dirname, "..", "client")));
 
-async function fetchOpenWeather(endpoint, city) {
-  const url = new URL(`${OPENWEATHER_BASE}/${endpoint}`);
-  url.searchParams.set("q", city);
-  url.searchParams.set("appid", OPENWEATHER_API_KEY);
-  url.searchParams.set("units", "metric");
-  url.searchParams.set("lang", "ru");
-
-  const response = await fetch(url);
-  const data = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(data?.message || "OpenWeather request failed");
-    error.statusCode = response.status;
-    throw error;
+app.get("/api/geocode", async (req, res) => {
+  const city = req.query.q?.toString().trim();
+  if (!city) {
+    res.status(400).json({ message: "Query param q is required." });
+    return;
   }
 
-  return data;
-}
+  try {
+    const geo = await geocodeCity(city);
+    res.json(geo);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message });
+  }
+});
 
 app.get("/api/weather", async (req, res) => {
   const city = req.query.q?.toString().trim();
@@ -42,23 +75,38 @@ app.get("/api/weather", async (req, res) => {
   }
 
   try {
-    const data = await fetchOpenWeather("weather", city);
-    res.json(data);
+    const geo = await geocodeCity(city);
+    const meteo = await fetchMeteoForecast(geo.lat, geo.lon);
+    res.json(normalizeCurrent(geo, meteo));
   } catch (error) {
     res.status(error.statusCode || 500).json({ message: error.message });
   }
 });
 
 app.get("/api/forecast", async (req, res) => {
+  const lat = req.query.lat?.toString().trim();
+  const lon = req.query.lon?.toString().trim();
   const city = req.query.q?.toString().trim();
-  if (!city) {
-    res.status(400).json({ message: "Query param q is required." });
-    return;
-  }
 
   try {
-    const data = await fetchOpenWeather("forecast", city);
-    res.json(data);
+    let latitude = lat;
+    let longitude = lon;
+
+    if (city && (!latitude || !longitude)) {
+      const geo = await geocodeCity(city);
+      latitude = String(geo.lat);
+      longitude = String(geo.lon);
+    }
+
+    if (!latitude || !longitude) {
+      res.status(400).json({
+        message: "Query params lat and lon are required (or q for city name)."
+      });
+      return;
+    }
+
+    const meteo = await fetchMeteoForecast(latitude, longitude);
+    res.json(normalizeForecast(meteo));
   } catch (error) {
     res.status(error.statusCode || 500).json({ message: error.message });
   }
@@ -74,23 +122,9 @@ app.get("/api/uv", async (req, res) => {
   }
 
   try {
-    const url = new URL(OPENWEATHER_ONECALL);
-    url.searchParams.set("lat", lat);
-    url.searchParams.set("lon", lon);
-    url.searchParams.set("exclude", "minutely,hourly,daily,alerts");
-    url.searchParams.set("appid", OPENWEATHER_API_KEY);
-    url.searchParams.set("units", "metric");
-    url.searchParams.set("lang", "ru");
-
-    const response = await fetch(url);
-    const data = await response.json();
-    if (!response.ok) {
-      const error = new Error(data?.message || "UV request failed");
-      error.statusCode = response.status;
-      throw error;
-    }
-
-    res.json({ uvi: data?.current?.uvi ?? null });
+    const meteo = await fetchMeteoForecast(lat, lon);
+    const uvi = meteo.current?.uv_index ?? meteo.daily?.uv_index_max?.[0] ?? null;
+    res.json({ uvi });
   } catch (error) {
     res.status(error.statusCode || 500).json({ message: error.message });
   }
@@ -98,5 +132,5 @@ app.get("/api/uv", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server started on http://localhost:${PORT}`);
+  console.log("Weather: Open-Meteo | Geocoding: Nominatim (OpenStreetMap)");
 });
-

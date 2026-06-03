@@ -10,7 +10,7 @@ const weatherState = (() => {
 
       const favoriteCities = JSON.parse(savedData);
       return Array.isArray(favoriteCities) ? favoriteCities : [];
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -56,4 +56,3 @@ const weatherState = (() => {
 })();
 
 window.weatherState = weatherState;
-

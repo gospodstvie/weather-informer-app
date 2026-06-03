@@ -5,11 +5,18 @@
   "description": "Weather informer with backend proxy",
   "main": "server/server.js",
   "scripts": {
-    "start": "node server/server.js"
+    "start": "node server/server.js",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{js,json,css,md,html}\"",
+    "format:check": "prettier --check \"**/*.{js,json,css,md,html}\""
   },
   "dependencies": {
     "dotenv": "^17.2.3",
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "prettier": "^3.6.2"
   }
 }
-

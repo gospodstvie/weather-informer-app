@@ -1,19 +1,21 @@
 const weatherUi = (() => {
   function createWeatherCard(data, type, timezoneOffsetSeconds = 0) {
     const weather = data.weather[0];
-    const iconUrl = `https://openweathermap.org/img/wn/${weather.icon}.png`;
+    const iconChar = weather.icon || "🌤️";
     const tempRounded = Math.round(data.main.temp);
     const dateLabel = formatDateLabel(data.dt, type, timezoneOffsetSeconds);
     const popPercent = Math.round((data.pop || 0) * 100);
     const visibilityKm = data.visibility ? (data.visibility / 1000).toFixed(1) : "—";
+    const windSpeed = data.wind?.speed != null ? `${Math.round(data.wind.speed)} км/ч` : "—";
 
     return `
       <article class="forecast-item forecast-item-${type}">
         <p class="forecast-time">${dateLabel}</p>
-        <img src="${iconUrl}" alt="${weather.description}" width="50" height="50" />
+        <span class="forecast-icon" role="img" aria-label="${weather.description}">${iconChar}</span>
         <p class="forecast-temp">${tempRounded}°C</p>
         <p class="forecast-desc">${weather.description}</p>
         <p class="forecast-meta">Осадки: ${popPercent}%</p>
+        <p class="forecast-meta">Ветер: ${windSpeed}</p>
         <p class="forecast-meta">Видимость: ${visibilityKm} км</p>
       </article>
     `;
@@ -39,17 +41,11 @@ const weatherUi = (() => {
   }
 
   function renderFiveDayForecast(forecastData, container) {
-    const dailyMap = new Map();
     const timezoneOffsetSeconds = Number(forecastData?.city?.timezone) || 0;
-
-    (forecastData.list || []).forEach((item) => {
-      const dayKey = toCityDate(item.dt, timezoneOffsetSeconds).toLocaleDateString("ru-RU");
-      if (!dailyMap.has(dayKey) && dailyMap.size < 5) {
-        dailyMap.set(dayKey, item);
-      }
-    });
-
-    const dailyData = Array.from(dailyMap.values());
+    const dailyData =
+      forecastData.daily?.length > 0
+        ? forecastData.daily
+        : pickDailyFromHourly(forecastData.list || [], timezoneOffsetSeconds);
     if (!dailyData.length) {
       container.innerHTML = "<p class='empty-block'>Нет данных для 5-дневного прогноза.</p>";
       return;
@@ -62,15 +58,43 @@ const weatherUi = (() => {
 
   function renderCurrentMetrics(weatherData, uvIndex, container) {
     const pressureHpa = Math.round(weatherData.main.pressure);
+    const humidity = weatherData.main.humidity;
+    const feelsLike = Math.round(weatherData.main.feels_like ?? weatherData.main.temp);
+    const windSpeed =
+      weatherData.wind?.speed != null ? `${Math.round(weatherData.wind.speed)} км/ч` : "—";
     const timezoneOffsetSeconds = Number(weatherData.timezone) || 0;
-    const sunrise = formatClock(weatherData.sys.sunrise, timezoneOffsetSeconds);
-    const sunset = formatClock(weatherData.sys.sunset, timezoneOffsetSeconds);
+    const sunrise =
+      weatherData.sys?.sunrise != null
+        ? formatClock(weatherData.sys.sunrise, timezoneOffsetSeconds)
+        : "—";
+    const sunset =
+      weatherData.sys?.sunset != null
+        ? formatClock(weatherData.sys.sunset, timezoneOffsetSeconds)
+        : "—";
+    const uvLabel = uvIndex != null ? uvIndex.toFixed(1) : "—";
 
     container.innerHTML = `
+      <div class="metric-item"><span>Ощущается:</span><strong>${feelsLike}°C</strong></div>
+      <div class="metric-item"><span>Влажность:</span><strong>${humidity ?? "—"}%</strong></div>
+      <div class="metric-item"><span>Ветер:</span><strong>${windSpeed}</strong></div>
+      <div class="metric-item"><span>UV-индекс:</span><strong>${uvLabel}</strong></div>
       <div class="metric-item"><span>Давление:</span><strong>${pressureHpa} гПа</strong></div>
       <div class="metric-item"><span>Восход:</span><strong>${sunrise}</strong></div>
       <div class="metric-item"><span>Закат:</span><strong>${sunset}</strong></div>
     `;
+  }
+
+  function pickDailyFromHourly(hourlyList, timezoneOffsetSeconds) {
+    const dailyMap = new Map();
+
+    hourlyList.forEach((item) => {
+      const dayKey = toCityDate(item.dt, timezoneOffsetSeconds).toLocaleDateString("ru-RU");
+      if (!dailyMap.has(dayKey) && dailyMap.size < 5) {
+        dailyMap.set(dayKey, item);
+      }
+    });
+
+    return Array.from(dailyMap.values());
   }
 
   function applyDynamicThemeByIconAndTime(timeData) {
@@ -129,9 +153,7 @@ const weatherUi = (() => {
     });
 
     const timezoneOffsetSeconds = Number(forecastData?.city?.timezone) || 0;
-    const labels = next24Items.map((item) =>
-      formatClock(item.dt, timezoneOffsetSeconds)
-    );
+    const labels = next24Items.map((item) => formatClock(item.dt, timezoneOffsetSeconds));
     const tempData = next24Items.map((item) => Math.round(item.main.temp));
 
     const existingChart = window.__weatherTempChart;
@@ -228,4 +250,3 @@ const weatherUi = (() => {
 })();
 
 window.weatherUi = weatherUi;
-

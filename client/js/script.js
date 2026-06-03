@@ -57,7 +57,7 @@ if (addFavoriteButton) {
       return;
     }
 
-    weatherState.addCity(activeCity);
+    window.weatherState.addCity(activeCity);
     renderFavorites();
     showStatus(`Город ${activeCity} добавлен в избранное.`);
   });
@@ -91,9 +91,9 @@ function renderWeather(data, uvIndex = null) {
   temperature.textContent = `${tempRounded}°C`;
   description.textContent = weather.description;
 
-  const iconUrl = `https://openweathermap.org/img/wn/${weather.icon}@2x.png`;
-  weatherIcon.src = iconUrl;
-  weatherIcon.alt = weather.description;
+  const iconChar = weather.icon || "🌤️";
+  weatherIcon.textContent = iconChar;
+  weatherIcon.setAttribute("aria-label", weather.description);
 
   applyTheme(weather.main);
   if (window.weatherUi?.applyDynamicThemeByIconAndTime) {
@@ -187,4 +187,3 @@ function renderFavorites() {
     }
   );
 }
-
