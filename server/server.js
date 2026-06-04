@@ -1,7 +1,9 @@
 const path = require("path");
 const express = require("express");
+const swaggerUi = require("swagger-ui-express");
 require("dotenv").config();
 
+const openApiSpec = require("../docs/openapi.json");
 const { geocodeCity } = require("./nominatim");
 const { fetchOpenMeteo } = require("./openMeteo");
 const { normalizeCurrent, normalizeForecast } = require("./normalize");
@@ -49,6 +51,8 @@ async function fetchMeteoForecast(lat, lon) {
     ...FORECAST_PARAMS
   });
 }
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 app.use(express.static(path.join(__dirname, "..", "client")));
 
@@ -132,5 +136,6 @@ app.get("/api/uv", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server started on http://localhost:${PORT}`);
+  console.log(`API docs: http://localhost:${PORT}/api-docs`);
   console.log("Weather: Open-Meteo | Geocoding: Nominatim (OpenStreetMap)");
 });

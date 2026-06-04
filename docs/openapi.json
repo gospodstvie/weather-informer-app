@@ -1,0 +1,268 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Weather Informer API",
+    "description": "REST API прокси-сервера погодного информера. Агрегирует данные Open-Meteo и геокодинг Nominatim.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "9/3-РПО-2023/2, Бадмаев Богдан"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5500",
+      "description": "Локальная разработка"
+    }
+  ],
+  "tags": [
+    { "name": "Geocoding", "description": "Поиск координат города" },
+    { "name": "Weather", "description": "Текущая погода и прогноз" }
+  ],
+  "paths": {
+    "/api/geocode": {
+      "get": {
+        "tags": ["Geocoding"],
+        "summary": "Геокодинг города",
+        "description": "Возвращает координаты и отображаемое имя города по строке запроса (Nominatim / OpenStreetMap).",
+        "operationId": "geocodeCity",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Название города, например: Москва",
+            "schema": { "type": "string", "example": "Москва" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Город найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GeocodeResult" },
+                "example": {
+                  "name": "Москва",
+                  "lat": 55.7522,
+                  "lon": 37.6156,
+                  "displayName": "Москва, Центральный федеральный округ, Россия"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/weather": {
+      "get": {
+        "tags": ["Weather"],
+        "summary": "Текущая погода",
+        "description": "Геокодирует город и возвращает нормализованные данные о текущей погоде (Open-Meteo).",
+        "operationId": "getCurrentWeather",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Название города",
+            "schema": { "type": "string", "example": "Москва" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CurrentWeather" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/forecast": {
+      "get": {
+        "tags": ["Weather"],
+        "summary": "Прогноз погоды",
+        "description": "Почасовой и дневной прогноз по координатам или по названию города (параметр q).",
+        "operationId": "getForecast",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "description": "Широта",
+            "schema": { "type": "number", "example": 55.75 }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": false,
+            "description": "Долгота",
+            "schema": { "type": "number", "example": 37.62 }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Название города (если lat/lon не заданы)",
+            "schema": { "type": "string", "example": "Москва" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Прогноз получен",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForecastBundle" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/uv": {
+      "get": {
+        "tags": ["Weather"],
+        "summary": "UV-индекс",
+        "description": "Возвращает текущий или дневной максимальный UV-индекс для координат.",
+        "operationId": "getUvIndex",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "example": 55.75 }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "example": 37.62 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "UV-индекс",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uvi": { "type": "number", "nullable": true, "example": 1.85 }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GeocodeResult": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "lat": { "type": "number" },
+          "lon": { "type": "number" },
+          "displayName": { "type": "string" }
+        }
+      },
+      "CurrentWeather": {
+        "type": "object",
+        "description": "Нормализованный ответ текущей погоды",
+        "properties": {
+          "name": { "type": "string" },
+          "coord": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lon": { "type": "number" }
+            }
+          },
+          "main": {
+            "type": "object",
+            "properties": {
+              "temp": { "type": "number" },
+              "feels_like": { "type": "number" },
+              "pressure": { "type": "number" },
+              "humidity": { "type": "number" }
+            }
+          },
+          "weather": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "main": { "type": "string" },
+                "description": { "type": "string" },
+                "icon": { "type": "string" }
+              }
+            }
+          },
+          "uvi": { "type": "number", "nullable": true }
+        }
+      },
+      "ForecastBundle": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "object",
+            "properties": {
+              "timezone": { "type": "integer" },
+              "name": { "type": "string" }
+            }
+          },
+          "list": { "type": "array", "items": { "type": "object" } },
+          "daily": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "ErrorMessage": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Некорректные параметры запроса",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorMessage" },
+            "example": { "message": "Query param q is required." }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Город не найден",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorMessage" },
+            "example": { "message": "Город не найден" }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Внутренняя ошибка или недоступность внешнего API",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorMessage" },
+            "example": { "message": "Open-Meteo request failed" }
+          }
+        }
+      }
+    }
+  }
+}

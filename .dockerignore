@@ -1,0 +1,9 @@
+.git
+.gitignore
+.vscode
+.ruff_cache/
+.venv/
+venv/
+node_modules/
+dist/
+.env
