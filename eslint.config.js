@@ -21,7 +21,8 @@ module.exports = [
         module: "readonly",
         require: "readonly",
         __dirname: "readonly",
-        URL: "readonly"
+        URL: "readonly",
+        AbortSignal: "readonly"
       }
     },
     rules: {
