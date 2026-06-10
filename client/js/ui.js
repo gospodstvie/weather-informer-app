@@ -1,22 +1,40 @@
 const weatherUi = (() => {
+  function iconVariant(data) {
+    return data?.is_day === 0 ? "night" : "day";
+  }
+
+  function renderIconHtml(iconKey, description, options = {}) {
+    if (window.weatherIcons?.render) {
+      return window.weatherIcons.render(iconKey || "partly-cloudy", description, options);
+    }
+    return "🌤️";
+  }
+
   function createWeatherCard(data, type, timezoneOffsetSeconds = 0) {
     const weather = data.weather[0];
-    const iconChar = weather.icon || "🌤️";
+    const iconHtml = renderIconHtml(weather.icon, weather.description, {
+      size: 52,
+      variant: iconVariant(data)
+    });
     const tempRounded = Math.round(data.main.temp);
     const dateLabel = formatDateLabel(data.dt, type, timezoneOffsetSeconds);
     const popPercent = Math.round((data.pop || 0) * 100);
-    const visibilityKm = data.visibility ? (data.visibility / 1000).toFixed(1) : "—";
     const windSpeed = data.wind?.speed != null ? `${Math.round(data.wind.speed)} км/ч` : "—";
 
+    const metaBlock =
+      type === "hourly"
+        ? `<p class="forecast-meta">${popPercent}% · ${windSpeed}</p>`
+        : `<p class="forecast-meta">${popPercent}% осадков</p>`;
+
+    const nightClass = data.is_day === 0 ? " forecast-item-night" : "";
+
     return `
-      <article class="forecast-item forecast-item-${type}">
+      <article class="forecast-item forecast-item-${type}${nightClass}">
         <p class="forecast-time">${dateLabel}</p>
-        <span class="forecast-icon" role="img" aria-label="${weather.description}">${iconChar}</span>
-        <p class="forecast-temp">${tempRounded}°C</p>
+        <span class="forecast-icon" role="img" aria-label="${weather.description}">${iconHtml}</span>
+        <p class="forecast-temp">${tempRounded}°</p>
         <p class="forecast-desc">${weather.description}</p>
-        <p class="forecast-meta">Осадки: ${popPercent}%</p>
-        <p class="forecast-meta">Ветер: ${windSpeed}</p>
-        <p class="forecast-meta">Видимость: ${visibilityKm} км</p>
+        ${metaBlock}
       </article>
     `;
   }
@@ -74,13 +92,13 @@ const weatherUi = (() => {
     const uvLabel = uvIndex != null ? uvIndex.toFixed(1) : "—";
 
     container.innerHTML = `
-      <div class="metric-item"><span>Ощущается:</span><strong>${feelsLike}°C</strong></div>
-      <div class="metric-item"><span>Влажность:</span><strong>${humidity ?? "—"}%</strong></div>
-      <div class="metric-item"><span>Ветер:</span><strong>${windSpeed}</strong></div>
-      <div class="metric-item"><span>UV-индекс:</span><strong>${uvLabel}</strong></div>
-      <div class="metric-item"><span>Давление:</span><strong>${pressureHpa} гПа</strong></div>
-      <div class="metric-item"><span>Восход:</span><strong>${sunrise}</strong></div>
-      <div class="metric-item"><span>Закат:</span><strong>${sunset}</strong></div>
+      <div class="metric-item"><span class="metric-icon">🌡️</span><span>Ощущается</span><strong>${feelsLike}°</strong></div>
+      <div class="metric-item"><span class="metric-icon">💧</span><span>Влажность</span><strong>${humidity ?? "—"}%</strong></div>
+      <div class="metric-item"><span class="metric-icon">💨</span><span>Ветер</span><strong>${windSpeed}</strong></div>
+      <div class="metric-item"><span class="metric-icon">☀️</span><span>UV</span><strong>${uvLabel}</strong></div>
+      <div class="metric-item"><span class="metric-icon">📊</span><span>Давление</span><strong>${pressureHpa}</strong></div>
+      <div class="metric-item"><span class="metric-icon">🌅</span><span>Восход</span><strong>${sunrise}</strong></div>
+      <div class="metric-item"><span class="metric-icon">🌇</span><span>Закат</span><strong>${sunset}</strong></div>
     `;
   }
 
@@ -111,32 +129,42 @@ const weatherUi = (() => {
       sunrise < sunset;
 
     const isNightBySunTime = hasValidTimeData ? dt < sunrise || dt >= sunset : false;
-    document.body.classList.add(isNightBySunTime ? "theme-night" : "theme-day");
+    const isNightByIsDay = timeData?.is_day === 0;
+    const isNight = hasValidTimeData ? isNightBySunTime : isNightByIsDay;
+    document.body.classList.add(isNight ? "theme-night" : "theme-day");
   }
 
   function renderFavoriteCities(favoriteCities, container, onCityClick, onRemoveClick) {
     if (!favoriteCities.length) {
-      container.innerHTML = "<p class='empty-block'>Избранных городов пока нет.</p>";
+      container.innerHTML = "";
       return;
     }
 
     container.innerHTML = favoriteCities
       .map(
         (city) => `
-          <div class="favorite-city-item">
-            <button class="favorite-city-open" data-city="${city}" type="button">${city}</button>
-            <button class="favorite-city-remove" data-city="${city}" aria-label="Удалить ${city}" type="button">✕</button>
-          </div>
+          <button class="chip chip-city" data-city="${city}" type="button">
+            ${city}
+            <span class="chip-remove" data-remove="${city}" aria-label="Удалить ${city}" role="button">×</span>
+          </button>
         `
       )
       .join("");
 
-    container.querySelectorAll(".favorite-city-open").forEach((button) => {
-      button.addEventListener("click", () => onCityClick(button.dataset.city));
+    container.querySelectorAll(".chip-city").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        if (event.target.closest("[data-remove]")) {
+          return;
+        }
+        onCityClick(button.dataset.city);
+      });
     });
 
-    container.querySelectorAll(".favorite-city-remove").forEach((button) => {
-      button.addEventListener("click", () => onRemoveClick(button.dataset.city));
+    container.querySelectorAll("[data-remove]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        onRemoveClick(button.dataset.remove);
+      });
     });
   }
 
@@ -156,6 +184,12 @@ const weatherUi = (() => {
     const labels = next24Items.map((item) => formatClock(item.dt, timezoneOffsetSeconds));
     const tempData = next24Items.map((item) => Math.round(item.main.temp));
 
+    const styles = getComputedStyle(document.body);
+    const lineColor = styles.getPropertyValue("--chart-line").trim() || "#f97316";
+    const fillColor = styles.getPropertyValue("--chart-fill").trim() || "rgba(249,115,22,0.2)";
+    const gridColor = styles.getPropertyValue("--chart-grid").trim() || "rgba(30,41,59,0.08)";
+    const tickColor = styles.getPropertyValue("--text-secondary").trim() || "#64748b";
+
     const existingChart = window.__weatherTempChart;
     if (existingChart) {
       existingChart.destroy();
@@ -169,11 +203,14 @@ const weatherUi = (() => {
           {
             label: "Температура (24 часа)",
             data: tempData,
-            borderColor: "rgba(255, 255, 255, 0.95)",
-            backgroundColor: "rgba(255, 255, 255, 0.25)",
+            borderColor: lineColor,
+            backgroundColor: fillColor,
             fill: true,
-            tension: 0.35,
-            pointRadius: 3
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: lineColor,
+            pointBorderColor: "#fff",
+            pointBorderWidth: 2
           }
         ]
       },
@@ -181,31 +218,21 @@ const weatherUi = (() => {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: {
-            labels: {
-              color: "#f5f8ff"
-            }
-          }
+          legend: { display: false }
         },
         scales: {
           x: {
-            ticks: {
-              color: "#f5f8ff"
-            },
-            grid: {
-              color: "rgba(255, 255, 255, 0.2)"
-            }
+            ticks: { color: tickColor, maxTicksLimit: 8 },
+            grid: { color: gridColor }
           },
           y: {
             ticks: {
-              color: "#f5f8ff",
+              color: tickColor,
               callback(value) {
                 return `${value}°`;
               }
             },
-            grid: {
-              color: "rgba(255, 255, 255, 0.2)"
-            }
+            grid: { color: gridColor }
           }
         }
       }
@@ -238,6 +265,20 @@ const weatherUi = (() => {
     return new Date(utcMs + timezoneOffsetSeconds * 1000 + clientOffsetMs);
   }
 
+  function formatCityDateTime(unixSeconds, timezoneOffsetSeconds = 0) {
+    const date = toCityDate(unixSeconds, timezoneOffsetSeconds);
+    const datePart = date.toLocaleDateString("ru-RU", {
+      weekday: "long",
+      day: "numeric",
+      month: "long"
+    });
+    const timePart = date.toLocaleTimeString("ru-RU", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    return `${datePart} — ${timePart}`;
+  }
+
   return {
     createWeatherCard,
     renderHourlyForecast,
@@ -245,7 +286,8 @@ const weatherUi = (() => {
     renderCurrentMetrics,
     applyDynamicThemeByIconAndTime,
     renderFavoriteCities,
-    renderCharts
+    renderCharts,
+    formatCityDateTime
   };
 })();
 

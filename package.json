@@ -8,7 +8,9 @@
     "start": "node server/server.js",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{js,json,css,md,html}\"",
-    "format:check": "prettier --check \"**/*.{js,json,css,md,html}\""
+    "format:check": "prettier --check \"**/*.{js,json,css,md,html}\"",
+    "backup": "powershell -ExecutionPolicy Bypass -File scripts/backup.ps1",
+    "restore": "powershell -ExecutionPolicy Bypass -File scripts/restore.ps1"
   },
   "dependencies": {
     "dotenv": "^17.2.3",

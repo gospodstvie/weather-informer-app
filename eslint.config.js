@@ -41,7 +41,9 @@ module.exports = [
         fetch: "readonly",
         weatherApi: "readonly",
         weatherUi: "readonly",
-        weatherState: "readonly"
+        weatherState: "readonly",
+        weatherIcons: "readonly",
+        getComputedStyle: "readonly"
       }
     },
     rules: {

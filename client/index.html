@@ -8,70 +8,90 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="theme-default">
-    <main class="weather-app">
-      <section class="weather-card" aria-labelledby="app-title">
-        <h1 id="app-title">Погодный информер</h1>
+    <div class="bg-blob bg-blob-1" aria-hidden="true"></div>
+    <div class="bg-blob bg-blob-2" aria-hidden="true"></div>
 
-        <form id="weather-form" class="weather-form">
-          <label for="city-input" class="sr-only">Введите город</label>
-          <input
-            id="city-input"
-            type="text"
-            name="city"
-            placeholder="Например, Москва"
-            autocomplete="off"
-            required
-          />
-          <button type="submit">Получить прогноз</button>
-        </form>
-        <div class="favorites-controls">
-          <button id="add-favorite-button" type="button">Добавить в избранное</button>
+    <main class="weather-app">
+      <header class="app-header">
+        <div class="app-header-text">
+          <h1 id="app-title">Погодный информер</h1>
+          <p class="app-subtitle">Точный прогноз погоды для вашего дня</p>
         </div>
-        <section class="favorites-section" aria-labelledby="favorites-title">
-          <h3 id="favorites-title">Избранные города</h3>
-          <div id="favorites-list" class="favorites-list"></div>
+
+        <form id="weather-form" class="search-form">
+          <label for="city-input" class="sr-only">Введите город</label>
+          <div class="search-input-wrap">
+            <span class="search-icon" aria-hidden="true">📍</span>
+            <input
+              id="city-input"
+              type="text"
+              name="city"
+              placeholder="Например, Москва"
+              autocomplete="off"
+              required
+            />
+          </div>
+          <button type="submit" class="btn-primary">Получить прогноз</button>
+        </form>
+
+        <section class="favorites-bar" aria-labelledby="favorites-title">
+          <h2 id="favorites-title" class="favorites-label">
+            <span aria-hidden="true">⭐</span> Избранные города
+          </h2>
+          <div id="favorites-list" class="favorites-chips"></div>
+          <button id="add-favorite-button" type="button" class="chip chip-add">+ Добавить</button>
         </section>
 
         <p id="status-message" class="status-message" aria-live="polite"></p>
+      </header>
 
-        <article id="weather-result" class="weather-result hidden" aria-live="polite">
-          <h2 id="city-name"></h2>
-          <span id="weather-icon" class="weather-emoji-icon" role="img" aria-hidden="true"></span>
-          <p id="temperature" class="temperature"></p>
-          <p id="description" class="description"></p>
-          <div id="weather-metrics" class="weather-metrics"></div>
-        </article>
+      <article id="weather-result" class="hero-card hidden" aria-live="polite">
+        <div class="hero-inner">
+          <div class="hero-info">
+            <h2 id="city-name" class="hero-city"></h2>
+            <p id="weather-datetime" class="hero-datetime"></p>
+            <div class="hero-temp-block">
+              <p id="temperature" class="hero-temp"></p>
+              <span id="weather-icon" class="sr-only" role="img"></span>
+            </div>
+            <p id="description" class="hero-desc"></p>
+            <div id="weather-metrics" class="hero-metrics"></div>
+          </div>
+          <div class="hero-scene" aria-hidden="true">
+            <div id="hero-scene-icon" class="hero-scene-icon"></div>
+            <div class="hero-scene-glow"></div>
+          </div>
+        </div>
+      </article>
 
-        <section class="forecast-section" aria-labelledby="hourly-title">
+      <div class="panels-grid">
+        <section class="panel" aria-labelledby="hourly-title">
           <h3 id="hourly-title">Почасовой прогноз (24 часа)</h3>
           <div id="hourly-forecast" class="forecast-scroll"></div>
         </section>
 
-        <section class="forecast-section" aria-labelledby="daily-title">
+        <section class="panel" aria-labelledby="daily-title">
           <h3 id="daily-title">Прогноз на 5 дней</h3>
           <div id="five-day-forecast" class="forecast-grid"></div>
         </section>
 
-        <section class="chart-section" aria-labelledby="chart-title">
+        <section class="panel panel-chart" aria-labelledby="chart-title">
           <h3 id="chart-title">График температуры (24 часа)</h3>
           <div class="chart-wrapper">
-            <canvas
-              id="temperature-chart"
-              aria-label="График температуры по времени"
-              role="img"
-            ></canvas>
+            <canvas id="temperature-chart" aria-label="График температуры" role="img"></canvas>
           </div>
         </section>
-      </section>
+      </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/weatherIcons.js"></script>
     <script src="js/api.js"></script>
     <script src="js/state.js"></script>
     <script src="js/ui.js"></script>

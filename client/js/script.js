@@ -4,7 +4,9 @@ const statusMessage = document.getElementById("status-message");
 const resultBlock = document.getElementById("weather-result");
 const cityName = document.getElementById("city-name");
 const weatherIcon = document.getElementById("weather-icon");
+const heroSceneIcon = document.getElementById("hero-scene-icon");
 const temperature = document.getElementById("temperature");
+const weatherDatetime = document.getElementById("weather-datetime");
 const description = document.getElementById("description");
 const weatherMetrics = document.getElementById("weather-metrics");
 const hourlyForecast = document.getElementById("hourly-forecast");
@@ -51,19 +53,30 @@ form.addEventListener("submit", async (event) => {
 });
 
 if (addFavoriteButton) {
-  addFavoriteButton.addEventListener("click", () => {
+  addFavoriteButton.addEventListener("click", async () => {
     if (!activeCity) {
       showStatus("Сначала получите прогноз для города.");
       return;
     }
 
-    window.weatherState.addCity(activeCity);
-    renderFavorites();
-    showStatus(`Город ${activeCity} добавлен в избранное.`);
+    try {
+      await window.weatherState.addCity(activeCity);
+      renderFavorites();
+      showStatus(`Город ${activeCity} добавлен в избранное.`);
+    } catch (error) {
+      showStatus(error.message);
+    }
   });
 }
 
-renderFavorites();
+async function initApp() {
+  if (window.weatherState?.loadFavorites) {
+    await window.weatherState.loadFavorites();
+  }
+  renderFavorites();
+}
+
+initApp();
 
 async function fetchWeather(city) {
   if (window.weatherApi?.fetchWeather) {
@@ -86,13 +99,37 @@ async function fetchWeather(city) {
 function renderWeather(data, uvIndex = null) {
   const weather = data.weather[0];
   const tempRounded = Math.round(data.main.temp);
+  const timezoneOffsetSeconds = Number(data.timezone) || 0;
 
   cityName.textContent = data.name;
   temperature.textContent = `${tempRounded}°C`;
+
+  if (weatherDatetime && window.weatherUi?.formatCityDateTime) {
+    weatherDatetime.textContent = window.weatherUi.formatCityDateTime(
+      data.dt,
+      timezoneOffsetSeconds
+    );
+  }
+
   description.textContent = weather.description;
 
-  const iconChar = weather.icon || "🌤️";
-  weatherIcon.textContent = iconChar;
+  const iconVariant = data.is_day === 0 ? "night" : "day";
+  const iconOptions = { size: 168, variant: iconVariant };
+
+  if (window.weatherIcons?.render) {
+    const iconHtml = window.weatherIcons.render(
+      weather.icon || "partly-cloudy",
+      weather.description,
+      iconOptions
+    );
+    if (heroSceneIcon) {
+      heroSceneIcon.innerHTML = iconHtml;
+    }
+    weatherIcon.textContent = weather.description;
+  } else {
+    if (heroSceneIcon) heroSceneIcon.textContent = "🌤️";
+    weatherIcon.textContent = weather.description;
+  }
   weatherIcon.setAttribute("aria-label", weather.description);
 
   applyTheme(weather.main);
@@ -101,7 +138,8 @@ function renderWeather(data, uvIndex = null) {
       dt: data.dt,
       sunrise: data.sys?.sunrise,
       sunset: data.sys?.sunset,
-      timezone: data.timezone
+      timezone: data.timezone,
+      is_day: data.is_day
     });
   }
 
@@ -116,14 +154,25 @@ function showStatus(message) {
   statusMessage.textContent = message;
 }
 
+const weatherThemeClasses = [
+  "theme-default",
+  "theme-clear",
+  "theme-clouds",
+  "theme-rain",
+  "theme-snow",
+  "theme-thunderstorm",
+  "theme-drizzle",
+  "theme-mist"
+];
+
 function applyTheme(weatherMain) {
-  document.body.className = "";
-  const nextTheme = weatherThemeMap[weatherMain] || "theme-default";
-  document.body.classList.add(nextTheme);
+  weatherThemeClasses.forEach((themeClass) => document.body.classList.remove(themeClass));
+  document.body.classList.add(weatherThemeMap[weatherMain] || "theme-default");
 }
 
 function resetTheme() {
-  document.body.className = "";
+  weatherThemeClasses.forEach((themeClass) => document.body.classList.remove(themeClass));
+  document.body.classList.remove("theme-day", "theme-night");
   document.body.classList.add("theme-default");
 }
 
@@ -181,9 +230,13 @@ function renderFavorites() {
           resetTheme();
         });
     },
-    (city) => {
-      window.weatherState.removeCity(city);
-      renderFavorites();
+    async (city) => {
+      try {
+        await window.weatherState.removeCity(city);
+        renderFavorites();
+      } catch (error) {
+        showStatus(error.message);
+      }
     }
   );
 }

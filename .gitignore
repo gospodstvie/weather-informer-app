@@ -1,6 +1,14 @@
 # Logs
 logs
 *.log
+
+# Backups (Спринт 4)
+backups/
+
+# Runtime app data (восстанавливается из бэкапа)
+data/favorites.json
+data/uploads/*
+!data/uploads/.gitkeep
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

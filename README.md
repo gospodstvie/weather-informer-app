@@ -101,6 +101,7 @@ docker compose down
 | `LOG_LEVEL` | string | Уровень логирования (`info`, `warn`, `error`) | `info` |
 | `LOG_MAX_SIZE_MB` | number | Ротация лог-файла при достижении размера (МБ) | `5` |
 | `LOG_MAX_FILES` | number | Максимум архивных копий лога | `5` |
+| `BACKUP_DIR` | string | Папка для резервных копий (по умолчанию `./backups`) | пусто |
 
 Секреты (API-ключи) не требуются: Open-Meteo и Nominatim работают без регистрации.
 
@@ -122,6 +123,18 @@ docker compose down
 
 ---
 
+## Резервное копирование (спринт 4)
+
+```powershell
+npm run backup
+# после симуляции сбоя (удаление data/favorites.json):
+npm run restore -- -BackupPath backups\backup_YYYYMMDD_HHMMSS
+```
+
+Подробнее: [docs/BACKUP.md](docs/BACKUP.md)
+
+---
+
 ## Разработка
 
 ```bash
@@ -136,6 +149,7 @@ npm run format:check  # Проверка форматирования
 
 - [Руководство администратора](docs/ADMIN.md) — требования, деплой, Nginx, аварийное восстановление
 - [Логирование](docs/LOGGING.md) — Winston, ротация, тестирование инцидентов
+- [Резервное копирование](docs/BACKUP.md) — backup/restore, fire drill (спринт 4)
 - [OpenAPI](docs/openapi.json) — машиночитаемая спецификация API
 
 ---

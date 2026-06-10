@@ -8,6 +8,12 @@ const { logger, createModuleLogger } = require("./logger");
 const { geocodeCity } = require("./nominatim");
 const { fetchOpenMeteo } = require("./openMeteo");
 const { normalizeCurrent, normalizeForecast } = require("./normalize");
+const {
+  ensureDataLayout,
+  readFavorites,
+  addFavorite,
+  removeFavorite
+} = require("./dataStore");
 
 const log = createModuleLogger("server.js");
 const app = express();
@@ -30,7 +36,8 @@ const FORECAST_PARAMS = {
     "precipitation_probability",
     "weather_code",
     "visibility",
-    "wind_speed_10m"
+    "wind_speed_10m",
+    "is_day"
   ].join(","),
   daily: [
     "weather_code",
@@ -88,8 +95,40 @@ app.use((req, res, next) => {
   next();
 });
 
+ensureDataLayout();
+
+app.use(express.json());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 app.use(express.static(path.join(__dirname, "..", "client")));
+
+app.get("/api/favorites", (_req, res) => {
+  res.json(readFavorites());
+});
+
+app.post("/api/favorites", (req, res) => {
+  const city = req.body?.city?.toString().trim();
+  if (!city) {
+    log.warn("POST /api/favorites: пустое имя города");
+    res.status(400).json({ message: "Field city is required." });
+    return;
+  }
+
+  const favorites = addFavorite(city);
+  log.info(`Избранное: добавлен город "${city}"`);
+  res.status(201).json(favorites);
+});
+
+app.delete("/api/favorites", (req, res) => {
+  const city = req.query.city?.toString().trim();
+  if (!city) {
+    res.status(400).json({ message: "Query param city is required." });
+    return;
+  }
+
+  const favorites = removeFavorite(city);
+  log.info(`Избранное: удалён город "${city}"`);
+  res.json(favorites);
+});
 
 app.get("/api/geocode", async (req, res) => {
   const city = req.query.q?.toString().trim();

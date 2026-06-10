@@ -8,6 +8,7 @@ RUN npm install --omit=dev
 COPY server ./server
 COPY client ./client
 COPY docs ./docs
+COPY data ./data
 COPY .env.example ./
 
 ENV PORT=5500

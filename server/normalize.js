@@ -27,7 +27,8 @@ function buildForecastItem({
     weather: [weather],
     wind: { speed: windSpeed ?? 0 },
     pop: pop != null ? pop / 100 : 0,
-    visibility: visibility != null ? Math.round(visibility * 1000) : null
+    visibility: visibility != null ? Math.round(visibility * 1000) : null,
+    is_day: isDay ? 1 : 0
   };
 }
 
@@ -58,6 +59,7 @@ function normalizeCurrent(geo, meteo) {
       humidity: current.relative_humidity_2m
     },
     weather: [weather],
+    is_day: isDay ? 1 : 0,
     wind: {
       speed: current.wind_speed_10m ?? 0,
       deg: current.wind_direction_10m ?? null
@@ -92,7 +94,7 @@ function normalizeForecast(meteo) {
         visibility: hourly.visibility?.[index],
         windSpeed: hourly.wind_speed_10m?.[index],
         utcOffsetSeconds,
-        isDay: true
+        isDay: hourly.is_day?.[index] === 1
       });
     })
     .filter(Boolean);
